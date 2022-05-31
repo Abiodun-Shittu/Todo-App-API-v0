@@ -1,4 +1,5 @@
 const express = require("express");
+const { v4: uuidv4 } = require('uuid');
 
 // Initaialize router
 const router = express.Router();
@@ -13,9 +14,17 @@ router.get('/users', (req, res) => {
 
 // Create users
 router.post('/users', (req, res) => {
-    const user = req.body;
+    const email = req.body.email;
+    const name = req.body.name;
+    const user = {
+        data: {
+            id: uuidv4(),
+            email,
+            name,
+        }
+    };
     users.push(user);
-    res.send(`Your account has been successfully created`);
+    res.json(user);
 });
 
 // Export Router
