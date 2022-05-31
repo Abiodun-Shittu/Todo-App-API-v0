@@ -33,11 +33,9 @@ router.post('/users', validateUser, (req, res) => {
     const name = req.body.name;
     const email = req.body.email;
     const user = {
-        data: {
-            id: uuidv4(),
-            email,
-            name,
-        }
+        id: uuidv4(),
+        email,
+        name,
     };
     users.push(user);
     res.status(200).json(user);
