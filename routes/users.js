@@ -66,5 +66,12 @@ router.patch('/users/:id', (req, res) => {
     res.json(updateUser);
 })
 
+// Delete User
+router.delete('/users/:id', (req, res) => {
+    const id = req.params.id;
+    users = users.filter(user => user.id !== id);
+    res.json(users);
+})
+
 // Export Router
 module.exports = router;
