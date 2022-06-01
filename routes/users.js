@@ -1,4 +1,5 @@
 const express = require("express");
+const { use } = require("express/lib/application");
 const { v4: uuidv4 } = require('uuid');
 
 // Initaialize router
@@ -44,7 +45,7 @@ router.post('/users', validateUser, (req, res) => {
 // Find a Specific User with Id
 router.get('/users/:id', (req, res) => {
     const id = req.params.id;
-    const findUser = users.find(user => user.id === id);
+    const findUser = users.find((user) => user.id === id);
     res.json(findUser);
 });
 
@@ -55,7 +56,7 @@ router.patch('/users/:id', (req, res) => {
     const id = req.params.id;
     const name = req.body.name;
     const email = req.body.email;
-    const updateUser = users.find(user => user.id === id);
+    const updateUser = users.find((user) => user.id === id);
     if (name) {
         updateUser.name = name;
     }
@@ -69,7 +70,7 @@ router.patch('/users/:id', (req, res) => {
 // Delete User
 router.delete('/users/:id', (req, res) => {
     const id = req.params.id;
-    users = users.filter(user => user.id !== id);
+    users = users.filter((user) => user.id !== id);
     res.json(users);
 })
 
