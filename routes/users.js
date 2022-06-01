@@ -41,5 +41,12 @@ router.post('/users', validateUser, (req, res) => {
     res.status(200).json(user);
 });
 
+// Find a Specific User with Id
+router.get('/users/:id', (req, res) => {
+    const id = req.params.id;
+    const findUser = users.find(user => user.id === id);
+    res.json(findUser);
+});
+
 // Export Router
 module.exports = router;
