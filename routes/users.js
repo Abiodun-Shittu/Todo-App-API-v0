@@ -48,5 +48,23 @@ router.get('/users/:id', (req, res) => {
     res.json(findUser);
 });
 
+// Update User Details
+// .put() can also be used to update the user details that is if you want to completely change all the details
+// .patch() is used in order to just change one of the details of the user
+router.patch('/users/:id', (req, res) => {
+    const id = req.params.id;
+    const name = req.body.name;
+    const email = req.body.email;
+    const updateUser = users.find(user => user.id === id);
+    if (name) {
+        updateUser.name = name;
+    }
+    if (email) {
+        updateUser.email = email;
+    }
+
+    res.json(updateUser);
+})
+
 // Export Router
 module.exports = router;
