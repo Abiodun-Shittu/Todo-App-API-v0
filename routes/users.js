@@ -1,31 +1,16 @@
 const express = require("express");
 const { use } = require("express/lib/application");
 const userController = require('../controllers/userController');
+const userMiddleware = require('../middlewares/userMiddleware');
 
 // Initaialize router
 const router = express.Router();
-
-// Create User Validation
-const validateUser = (req, res, next) => {
-    const name = req.body.name;
-    const email = req.body.email;
-    const password = req.body.password;
-    if (name.length >= 100) {
-        res.json({ error: "Your Name should not be greater than 100 characters" })
-    } else if (email.length >= 100) {
-        res.json({ error: "Your email should not be greater than 100 characters" })
-    } else if (password.length < 10 || password.length > 30) {
-        res.json({ error: "Your password should be greater than 10 and less than 30 characters" })
-    } else {
-        next();
-    }
-};
 
 // Find all users
 router.get('/users', userController.getUsers);
 
 // Create users
-router.post('/users', validateUser, userController.createUser);
+router.post('/users', userMiddleware.validateUser, userController.createUser);
 
 // Find a Specific User with Id
 router.get('/users/:id', userController.getUser);
