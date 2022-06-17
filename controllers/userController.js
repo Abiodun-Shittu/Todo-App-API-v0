@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 // Create an array to store user data
 let users = [];
@@ -46,7 +46,7 @@ const deleteUser = (req, res) => {
     res.json(users);
 };
 
-module.exports = {
+export default {
     getUsers,
     createUser,
     getUser,

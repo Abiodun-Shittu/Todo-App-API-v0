@@ -1,7 +1,6 @@
-const express = require("express");
-const { use } = require("express/lib/application");
-const userController = require('../controllers/userController');
-const userMiddleware = require('../middlewares/userMiddleware');
+import express from 'express';
+import userController from '../controllers/userController';
+import userMiddleware from '../middlewares/userMiddleware';
 
 // Initaialize router
 const router = express.Router();
@@ -24,4 +23,4 @@ router.patch('/users/:id', userController.updateUser);
 router.delete('/users/:id', userController.deleteUser);
 
 // Export Router
-module.exports = router;
+export default router;
