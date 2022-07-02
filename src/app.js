@@ -19,3 +19,5 @@ app.get('/api/v0/ping', (req, res) => {
 app.listen(port, () => {
     console.log(`Now Listening on port: http://localhost:${port}`);
 });
+
+export default app;
