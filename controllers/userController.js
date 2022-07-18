@@ -25,7 +25,7 @@ const createUser = async (req, res) => {
     users.push(user);
     res.status(201).json(user);
     } catch {
-        res.status(500).send(500);
+        res.status(500).sendStatus(500);
     }
 };
 
@@ -41,7 +41,7 @@ const loginUser = async (req, res) => {
             res.send('Password does not match')
         }
     } catch {
-        res.status(500).send(500);
+        res.status(500).sendStatus(500);
     }
 }
 
