@@ -1,5 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
+import JWT from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Create an array to store user data
 let users = [];
@@ -23,7 +26,11 @@ const createUser = async (req, res) => {
     };
     if (!user.name) {res.status(400).send('A name should be provided')}
     users.push(user);
-    res.status(201).json(user);
+    res.status(201);
+
+    // Send JSON WEB TOKEN
+    const token = JWT.sign(user, process.env.SECRET_KEY)
+    res.json({token})
     } catch {
         res.status(500).sendStatus(500);
     }
@@ -36,7 +43,8 @@ const loginUser = async (req, res) => {
     try {
         if (await bcrypt.compare(req.body.password, findUser.password))
         {
-            res.send('login successful')
+            const token = JWT.sign(findUser, process.env.SECRET_KEY)
+            res.json({token})
         } else {
             res.send('Password does not match')
         }
