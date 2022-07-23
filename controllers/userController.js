@@ -24,17 +24,16 @@ const createUser = async (req, res) => {
         email,
         password
     };
-    if (!user.name) {res.status(400).json({
+    if (!user.name) {return res.status(400).json({
         statusCode: 400,
         message: "Name should be provided",
-    })}
-    users.push(user);
-    res.status(201);
-
-    // Send JSON WEB TOKEN
-    const token = JWT.sign({name, email}, process.env.SECRET_KEY)
-    res.json({token})
-    } catch {
+    })} else {
+        users.push(user);
+        const token = JWT.sign({name, email}, process.env.SECRET_KEY)
+        res.json({token})
+        return res.status(201);
+    }
+} catch {
         res.status(500).sendStatus(500);
     }
 };
@@ -43,7 +42,7 @@ const loginUser = async (req, res) => {
     const name = req.body.name;
     const email = req.body.email;
     const findUser = users.find((user) => user.name === name);
-    if(!findUser) {res.status(404).json({
+    if(!findUser) {return res.status(404).json({
         statusCode: 404,
         message: "Invalid Credentials",
     })};
@@ -53,7 +52,7 @@ const loginUser = async (req, res) => {
             const token = JWT.sign({name, email}, process.env.SECRET_KEY)
             res.json({token})
         } else {
-            res.status(401).json({
+            return res.status(401).json({
                 statusCode: 401,
                 message: "Password does not match our records.",
             })
@@ -66,7 +65,7 @@ const loginUser = async (req, res) => {
 const getUser = (req, res) => {
     const id = req.params.id;
     const findUser = users.find((user) => user.id === id);
-    if(!findUser) {res.status(404).json({
+    if(!findUser) {return res.status(404).json({
         statusCode: 404,
         message: "Invalid Credentials",
     })}
@@ -78,7 +77,7 @@ const updateUser = (req, res) => {
     const name = req.body.name;
     const email = req.body.email;
     const updateUser = users.find((user) => user.id === id);
-    if(!updateUser) {res.status(404).json({
+    if(!updateUser) {return res.status(404).json({
         statusCode: 404,
         message: "Invalid Credentials",
     })}
@@ -94,7 +93,7 @@ const updateUser = (req, res) => {
 const deleteUser = (req, res) => {
     const id = req.params.id;
     const deleteUser = users.find((user) => user.id === id);
-    if(!deleteUser) {res.status(404).json({
+    if(!deleteUser) {return res.status(404).json({
         statusCode: 404,
         message: "Invalid Credentials",
     })};
