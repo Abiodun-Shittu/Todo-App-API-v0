@@ -20,16 +20,19 @@ const createUser = async (req, res) => {
         const password = hashPassword;
         const user = {
         id: uuidv4(),
-        email,
         name,
+        email,
         password
     };
-    if (!user.name) {res.status(400).send('A name should be provided')}
+    if (!user.name) {res.status(400).json({
+        statusCode: 400,
+        message: "Name should be provided",
+    })}
     users.push(user);
     res.status(201);
 
     // Send JSON WEB TOKEN
-    const token = JWT.sign(user, process.env.SECRET_KEY)
+    const token = JWT.sign({name, email}, process.env.SECRET_KEY)
     res.json({token})
     } catch {
         res.status(500).sendStatus(500);
@@ -38,15 +41,22 @@ const createUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
     const name = req.body.name;
+    const email = req.body.email;
     const findUser = users.find((user) => user.name === name);
-    if(!findUser) {res.status(404).send('The User with this NAME does not exist')};
+    if(!findUser) {res.status(404).json({
+        statusCode: 404,
+        message: "Invalid Credentials",
+    })};
     try {
         if (await bcrypt.compare(req.body.password, findUser.password))
         {
-            const token = JWT.sign(findUser, process.env.SECRET_KEY)
+            const token = JWT.sign({name, email}, process.env.SECRET_KEY)
             res.json({token})
         } else {
-            res.send('Password does not match')
+            res.status(401).json({
+                statusCode: 401,
+                message: "Password does not match our records.",
+            })
         }
     } catch {
         res.status(500).sendStatus(500);
@@ -56,7 +66,10 @@ const loginUser = async (req, res) => {
 const getUser = (req, res) => {
     const id = req.params.id;
     const findUser = users.find((user) => user.id === id);
-    if(!findUser) {res.status(404).send('The User with this ID does not exist')}
+    if(!findUser) {res.status(404).json({
+        statusCode: 404,
+        message: "Invalid Credentials",
+    })}
     res.json(findUser);
 };
 
@@ -65,7 +78,10 @@ const updateUser = (req, res) => {
     const name = req.body.name;
     const email = req.body.email;
     const updateUser = users.find((user) => user.id === id);
-    if(!updateUser) {res.status(404).send('The User with this ID does not exist')}
+    if(!updateUser) {res.status(404).json({
+        statusCode: 404,
+        message: "Invalid Credentials",
+    })}
     if (name) {
         updateUser.name = name;
     }
@@ -78,7 +94,10 @@ const updateUser = (req, res) => {
 const deleteUser = (req, res) => {
     const id = req.params.id;
     const deleteUser = users.find((user) => user.id === id);
-    if(!deleteUser) {res.status(404).send('The User with this ID does not exist')};
+    if(!deleteUser) {res.status(404).json({
+        statusCode: 404,
+        message: "Invalid Credentials",
+    })};
     users = users.filter((user) => user.id !== id);
     res.json(users);
 };
