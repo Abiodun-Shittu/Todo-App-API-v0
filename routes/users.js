@@ -11,6 +11,9 @@ router.get('/users', userController.getUsers);
 // Create users
 router.post('/users', userMiddleware.validateUser, userController.createUser);
 
+// Login users
+router.post('/users/login', userController.loginUser)
+
 // Find a Specific User with Id
 router.get('/users/:id', userController.getUser);
 
