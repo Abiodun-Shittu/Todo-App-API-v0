@@ -15,15 +15,15 @@ router.post('/users', userMiddleware.validateUser, userController.createUser);
 router.post('/users/login', userController.loginUser)
 
 // Find a Specific User with Id
-router.get('/users/:id', userController.getUser);
+router.get('/users/:id', userMiddleware.verifyToken, userController.getUser);
 
 // Update User Details
 // .put() can also be used to update the user details that is if you want to completely change all the details
 // .patch() is used in order to just change one of the details of the user
-router.patch('/users/:id', userController.updateUser);
+router.patch('/users/:id', userMiddleware.verifyToken, userController.updateUser);
 
 // Delete User
-router.delete('/users/:id', userController.deleteUser);
+router.delete('/users/:id', userMiddleware.verifyToken, userController.deleteUser);
 
 // Export Router
 export default router;
