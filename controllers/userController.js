@@ -29,12 +29,12 @@ const createUser = async (req, res) => {
         message: "Name should be provided",
     })} else {
         users.push(user);
-        const token = JWT.sign({name, email}, process.env.SECRET_KEY)
+        const token = JWT.sign({name, email}, process.env.SECRET_KEY, {expiresIn: "24h"})
         res.json({token})
         return res.status(201);
     }
 } catch {
-        res.status(500).sendStatus(500);
+        res.sendStatus(500);
     }
 };
 
@@ -49,7 +49,7 @@ const loginUser = async (req, res) => {
     try {
         if (await bcrypt.compare(req.body.password, findUser.password))
         {
-            const token = JWT.sign({name, email}, process.env.SECRET_KEY)
+            const token = JWT.sign({name, email}, process.env.SECRET_KEY, {expiresIn: "24h"})
             res.json({token})
         } else {
             return res.status(401).json({
@@ -58,7 +58,7 @@ const loginUser = async (req, res) => {
             })
         }
     } catch {
-        res.status(500).sendStatus(500);
+        res.sendStatus(500);
     }
 }
 
@@ -72,10 +72,13 @@ const getUser = (req, res) => {
     res.json(findUser);
 };
 
-const updateUser = (req, res) => {
+const updateUser = async (req, res) => {
     const id = req.params.id;
     const name = req.body.name;
     const email = req.body.email;
+    const password = req.body.password;
+    const salt = await bcrypt.genSalt();
+    const hashPassword = await bcrypt.hash(password, salt);
     const updateUser = users.find((user) => user.id === id);
     if(!updateUser) {return res.status(404).json({
         statusCode: 404,
@@ -86,6 +89,9 @@ const updateUser = (req, res) => {
     }
     if (email) {
         updateUser.email = email;
+    }
+    if (password) {
+        updateUser.password = hashPassword;
     }
     res.json(updateUser);
 };
