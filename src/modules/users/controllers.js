@@ -2,16 +2,15 @@ import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import JWT from 'jsonwebtoken';
 import dotenv from 'dotenv';
-dotenv.config();
 
-// Create an array to store user data
+dotenv.config();
 let users = [];
 
-const getUsers = (req, res) => {
+export function getUsers(req, res) {
     res.json(users)
 };
 
-const createUser = async (req, res) => {
+export async function createUser(req, res) {
     try {
         const salt = await bcrypt.genSalt();
         const hashPassword = await bcrypt.hash(req.body.password, salt);
@@ -38,7 +37,7 @@ const createUser = async (req, res) => {
     }
 };
 
-const loginUser = async (req, res) => {
+export async function loginUser(req, res) {
     const name = req.body.name;
     const email = req.body.email;
     const findUser = users.find((user) => user.name === name);
@@ -62,7 +61,7 @@ const loginUser = async (req, res) => {
     }
 }
 
-const getUser = (req, res) => {
+export function getUser(req, res) {
     const id = req.params.id;
     const findUser = users.find((user) => user.id === id);
     if(!findUser) {return res.status(404).json({
@@ -72,7 +71,7 @@ const getUser = (req, res) => {
     res.json(findUser);
 };
 
-const updateUser = async (req, res) => {
+export async function updateUser(req, res) {
     const id = req.params.id;
     const name = req.body.name;
     const email = req.body.email;
@@ -96,7 +95,7 @@ const updateUser = async (req, res) => {
     res.json(updateUser);
 };
 
-const deleteUser = (req, res) => {
+export function deleteUser(req, res) {
     const id = req.params.id;
     const deleteUser = users.find((user) => user.id === id);
     if(!deleteUser) {return res.status(404).json({
@@ -105,13 +104,4 @@ const deleteUser = (req, res) => {
     })};
     users = users.filter((user) => user.id !== id);
     res.json(users);
-};
-
-export default {
-    getUsers,
-    createUser,
-    loginUser,
-    getUser,
-    updateUser,
-    deleteUser
 };
