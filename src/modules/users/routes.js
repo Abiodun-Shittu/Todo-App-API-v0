@@ -2,20 +2,29 @@ import express from 'express';
 
 import { loginUser, getUsers, createUser, getUser, updateUser, deleteUser } from './controllers.js';
 import { validateUser } from './middlewares.js';
-import { verifyToken } from '../shared/middlewares.js';
+import SharedMiddlewares from '../shared/middlewares.js';
 
 const router = express.Router();
 
 router.get('/', getUsers);
 
-router.post('/', validateUser, createUser);
+router.post(
+  '/',
+  SharedMiddlewares.generateRequiredBodyParamsValidatorMiddleware(['name', 'email', 'password']),
+  validateUser,
+  createUser,
+);
 
-router.post('/login', loginUser)
+router.post(
+  '/login',
+  SharedMiddlewares.generateRequiredBodyParamsValidatorMiddleware(['email', 'password']),
+  loginUser,
+);
 
-router.get('/:id', verifyToken, getUser);
+router.get('/:id', SharedMiddlewares.verifyToken, getUser);
 
-router.patch('/:id', verifyToken, updateUser);
+router.patch('/:id', SharedMiddlewares.verifyToken, updateUser);
 
-router.delete('/:id', verifyToken, deleteUser);
+router.delete('/:id', SharedMiddlewares.verifyToken, deleteUser);
 
 export default router;

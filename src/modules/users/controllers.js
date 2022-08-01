@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt';
 import JWT from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
+import AppException from '../../utils/exceptions/AppException.js';
+
 dotenv.config();
 let users = [];
 
@@ -10,7 +12,7 @@ export function getUsers(req, res) {
     res.json(users)
 };
 
-export async function createUser(req, res) {
+export async function createUser(req, res, next) {
     try {
         const salt = await bcrypt.genSalt();
         const hashPassword = await bcrypt.hash(req.body.password, salt);
@@ -18,46 +20,51 @@ export async function createUser(req, res) {
         const email = req.body.email;
         const password = hashPassword;
         const user = {
-        id: uuidv4(),
-        name,
-        email,
-        password
-    };
-    if (!user.name) {return res.status(400).json({
-        statusCode: 400,
-        message: "Name should be provided",
-    })} else {
+            id: uuidv4(),
+            name,
+            email,
+            password
+        };
+
         users.push(user);
         const token = JWT.sign({name, email}, process.env.SECRET_KEY, {expiresIn: "24h"})
         res.json({token})
-        return res.status(201);
-    }
-} catch {
-        res.sendStatus(500);
+
+        return res.status(201).json({
+            statusCode: 201,
+            data: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+            },
+        });
+    } catch (err) {
+        next(err);
     }
 };
 
-export async function loginUser(req, res) {
-    const name = req.body.name;
-    const email = req.body.email;
-    const findUser = users.find((user) => user.name === name);
-    if(!findUser) {return res.status(404).json({
-        statusCode: 404,
-        message: "Invalid Credentials",
-    })};
+export async function loginUser(req, res, next) {
     try {
-        if (await bcrypt.compare(req.body.password, findUser.password))
-        {
-            const token = JWT.sign({name, email}, process.env.SECRET_KEY, {expiresIn: "24h"})
-            res.json({token})
+        const email = req.body.email;
+        const password = req.body.password;
+
+        const findUser = users.find((user) => user.email === email);
+
+        if (await bcrypt.compare(password, findUser.password)) {
+            const token = JWT.sign({name: findUser.name, email: findUser.email}, process.env.SECRET_KEY, {expiresIn: "24h"})
+
+            resData.statusCode = 200;
+            resData.message = "Success";
+            resData.data = {
+                token,
+            };
         } else {
-            return res.status(401).json({
-                statusCode: 401,
-                message: "Password does not match our records.",
-            })
+            throw new AppException(401, "Unable to authenticate user.");
         }
-    } catch {
-        res.sendStatus(500);
+
+        return res.status(resData.statusCode).json(resData);
+    } catch (err) {
+        next(err);
     }
 }
 
