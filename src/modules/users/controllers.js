@@ -14,8 +14,7 @@ export function getUsers(req, res) {
 
 export async function createUser(req, res, next) {
     try {
-        const salt = await bcrypt.genSalt();
-        const hashPassword = await bcrypt.hash(req.body.password, salt);
+        const hashPassword = await bcrypt.hash(req.body.password, 10);
         const name = req.body.name;
         const email = req.body.email;
         const password = hashPassword;
@@ -25,11 +24,10 @@ export async function createUser(req, res, next) {
             email,
             password
         };
-
+        
         users.push(user);
+        
         const token = JWT.sign({name, email}, process.env.SECRET_KEY, {expiresIn: "24h"})
-        res.json({token})
-
         return res.status(201).json({
             statusCode: 201,
             data: {
@@ -37,6 +35,7 @@ export async function createUser(req, res, next) {
                 name: user.name,
                 email: user.email,
             },
+            token,
         });
     } catch (err) {
         next(err);
@@ -52,63 +51,69 @@ export async function loginUser(req, res, next) {
 
         if (await bcrypt.compare(password, findUser.password)) {
             const token = JWT.sign({name: findUser.name, email: findUser.email}, process.env.SECRET_KEY, {expiresIn: "24h"})
-
-            resData.statusCode = 200;
-            resData.message = "Success";
-            resData.data = {
-                token,
-            };
+            return res.status(200).json({
+                statusCode: 200,
+                message: "success",
+                data: {
+                    token,
+                }
+            });
+            
         } else {
             throw new AppException(401, "Unable to authenticate user.");
         }
 
-        return res.status(resData.statusCode).json(resData);
     } catch (err) {
         next(err);
     }
 }
 
 export function getUser(req, res) {
-    const id = req.params.id;
-    const findUser = users.find((user) => user.id === id);
-    if(!findUser) {return res.status(404).json({
-        statusCode: 404,
-        message: "Invalid Credentials",
-    })}
-    res.json(findUser);
+        const id = req.params.id;
+        const findUser = users.find((user) => user.id === id);
+        if(!findUser) {
+            throw new AppException(404, "Unable to retrieve user")
+        }
+        return res.json({
+            id: findUser.id,
+            name: findUser.name,
+            email: findUser.email,
+        });
+
 };
 
 export async function updateUser(req, res) {
-    const id = req.params.id;
-    const name = req.body.name;
-    const email = req.body.email;
-    const password = req.body.password;
-    const salt = await bcrypt.genSalt();
-    const hashPassword = await bcrypt.hash(password, salt);
-    const updateUser = users.find((user) => user.id === id);
-    if(!updateUser) {return res.status(404).json({
-        statusCode: 404,
-        message: "Invalid Credentials",
-    })}
-    if (name) {
-        updateUser.name = name;
+        const id = req.params.id;
+        const name = req.body.name;
+        const email = req.body.email;
+        const password = req.body.password;
+        const updateUser = users.find((user) => user.id === id);
+        if(!updateUser) {
+            throw new AppException(404, "Unable to retrieve user")
+        }
+        if (name) {
+            updateUser.name = name;
+        }
+        if (email) {
+            updateUser.email = email;
+        }
+        if (password) {
+            const hashPassword = await bcrypt.hash(password, 10);
+            updateUser.password = hashPassword;
+        }
+        return res.json({
+            id: updateUser.id,
+            name: updateUser.name,
+            email: updateUser.email,
+        });
     }
-    if (email) {
-        updateUser.email = email;
-    }
-    if (password) {
-        updateUser.password = hashPassword;
-    }
-    res.json(updateUser);
-};
 
 export function deleteUser(req, res) {
-    const id = req.params.id;
-    const deleteUser = users.find((user) => user.id === id);
-    if(!deleteUser) {return res.status(404).json({
-        statusCode: 404,
-        message: "Invalid Credentials",
-    })};
-    users = users.filter((user) => user.id !== id);
-    res.json(users);
+        const id = req.params.id;
+        const deleteUser = users.find((user) => user.id === id);
+        if(!deleteUser) {
+            throw new AppException(404, "Unable to retrieve user")
+        };
+        users = users.filter((user) => user.id !== id);
+        res.json(users);
 };

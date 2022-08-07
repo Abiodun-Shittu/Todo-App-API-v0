@@ -10,8 +10,16 @@ export function errorHandler (err, _, res, next) {
   };
 
   switch (err.statusCode) {
+    case 400:
+      responseBody.statusCode = 400;
+      responseBody.message = err.message;
+      break;
     case 401:
       responseBody.statusCode = 401;
+      responseBody.message = err.message;
+      break;
+      case 403:
+      responseBody.statusCode = 403;
       responseBody.message = err.message;
       break;
     case 404:
