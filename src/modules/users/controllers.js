@@ -75,12 +75,14 @@ export function getUser(req, res) {
 	if (!findUser) {
 		throw new AppException(404, "Unable to retrieve user")
 	}
-	return res.json({
-		id: findUser.id,
-		name: findUser.name,
-		email: findUser.email,
+	return res.status(200).json({
+		statusCode: 200,
+		data: {
+			id: findUser.id,
+			name: findUser.name,
+			email: findUser.email,
+		},
 	});
-
 };
 
 export async function updateUser(req, res) {
@@ -102,10 +104,13 @@ export async function updateUser(req, res) {
 		const hashPassword = await bcrypt.hash(password, 10);
 		updateUser.password = hashPassword;
 	}
-	return res.json({
-		id: updateUser.id,
-		name: updateUser.name,
-		email: updateUser.email,
+	return res.status(200).json({
+		statusCode: 200,
+		data: {
+			id: updateUser.id,
+			name: updateUser.name,
+			email: updateUser.email,
+		},
 	});
 }
 
@@ -115,6 +120,8 @@ export function deleteUser(req, res) {
 	if (!deleteUser) {
 		throw new AppException(404, "Unable to retrieve user")
 	};
-	users = users.filter((user) => user.id !== id);
-	res.json(users);
+	return res.status(204).json({
+		statusCode: 204,
+		message: "User successfully deleted"
+	});
 };

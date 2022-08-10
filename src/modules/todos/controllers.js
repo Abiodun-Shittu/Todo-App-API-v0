@@ -39,11 +39,14 @@ export function getTodo(req, res) {
 	if (!findTodo) {
 		throw new AppException(404, "Unable to retrieve todo")
 	}
-	return res.json({
-		id: findTodo.id,
-		title: findTodo.title,
-		status: findTodo.status,
-		date: findTodo.date,
+	return res.status(200).json({
+		statusCode: 200,
+		data: {
+			id: findTodo.id,
+			title: findTodo.title,
+			status: findTodo.status,
+			date: findTodo.date,
+		},
 	});
 
 };
@@ -66,11 +69,14 @@ export function updateTodo(req, res) {
 	if (date) {
 		updateTodo.date = date;
 	}
-	return res.json({
-		id: updateTodo.id,
-		name: updateTodo.name,
-		status: updateTodo.status,
-		date: updateTodo.date,
+	return res.status(200).json({
+		statusCode: 200,
+		data: {
+			id: updateTodo.id,
+			name: updateTodo.name,
+			status: updateTodo.status,
+			date: updateTodo.date,
+		},
 	});
 };
 
@@ -80,6 +86,8 @@ export function deleteTodo(req, res) {
 	if (!deleteTodo) {
 		throw new AppException(404, "Unable to retrieve todo")
 	};
-	todos = todos.filter((todo) => todo.id !== id);
-	res.json(todos);
+	return res.status(204).json({
+		statusCode: 204,
+		message: "Todo successfully deleted"
+	});
 };
