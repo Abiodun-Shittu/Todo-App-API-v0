@@ -9,14 +9,15 @@ router.get('/', getTodos);
 
 router.post(
     '/',
+    SharedMiddlewares.verifyToken,
     SharedMiddlewares.generateRequiredBodyParamsValidatorMiddleware(['title', 'status', 'date']),
     createTodo,
 );
 
-router.get('/:id', getTodo);
+router.get('/:id', SharedMiddlewares.verifyToken, getTodo);
 
-router.patch('/:id', updateTodo);
+router.patch('/:id', SharedMiddlewares.verifyToken, updateTodo);
 
-router.delete('/:id', deleteTodo);
+router.delete('/:id', SharedMiddlewares.verifyToken, deleteTodo);
 
 export default router;
