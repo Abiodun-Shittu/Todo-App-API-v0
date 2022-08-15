@@ -1,5 +1,3 @@
-import { v4 } from 'uuid';
-
 import { todos } from '../database/database.js';
 import AppException from '../../utils/exceptions/AppException.js';
 
@@ -9,11 +7,12 @@ export function getTodos(_, res) {
 
 export function createTodo(req, res, next) {
 	try {
+		const id = req.body.id;
 		const title = req.body.title;
-		const status = req.body.status
+		const status = req.body.status;
 		const date = req.body.date;
 		const todo = {
-			id: v4(),
+			id,
 			title,
 			status,
 			date,
@@ -42,7 +41,6 @@ export function getTodo(req, res) {
 	return res.status(200).json({
 		statusCode: 200,
 		data: {
-			id: findTodo.id,
 			title: findTodo.title,
 			status: findTodo.status,
 			date: findTodo.date,
@@ -72,7 +70,6 @@ export function updateTodo(req, res) {
 	return res.status(200).json({
 		statusCode: 200,
 		data: {
-			id: updateTodo.id,
 			name: updateTodo.name,
 			status: updateTodo.status,
 			date: updateTodo.date,
