@@ -1,4 +1,4 @@
-import { todos } from '../database/database.js';
+import { todos, users } from '../database/database.js';
 import AppException from '../../utils/exceptions/AppException.js';
 
 export function getTodos(_, res) {
@@ -7,12 +7,11 @@ export function getTodos(_, res) {
 
 export function createTodo(req, res, next) {
 	try {
-		const id = req.body.id;
 		const title = req.body.title;
 		const status = req.body.status;
 		const date = req.body.date;
 		const todo = {
-			id,
+			id: req.userId,
 			title,
 			status,
 			date,

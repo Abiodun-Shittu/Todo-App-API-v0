@@ -28,7 +28,7 @@ export async function createUser(req, res, next) {
 
 		users.push(user);
 
-		const token = JWT.sign({ name, email }, process.env.SECRET_KEY, { expiresIn: "24h" })
+		const token = JWT.sign({ id: user.id, email }, process.env.SECRET_KEY, { expiresIn: "24h" })
 		return res.status(201).json({
 			statusCode: 201,
 			data: {
@@ -49,9 +49,9 @@ export async function loginUser(req, res, next) {
 		const password = req.body.password;
 
 		const findUser = users.find((user) => user.email === email);
-
+		
 		if (await bcrypt.compare(password, findUser.password)) {
-			const token = JWT.sign({ name: findUser.name, email: findUser.email }, process.env.SECRET_KEY, { expiresIn: "24h" })
+			const token = JWT.sign({ id: findUser.id, email: findUser.email }, process.env.SECRET_KEY, { expiresIn: "24h" })
 			return res.status(200).json({
 				statusCode: 200,
 				message: "success",
