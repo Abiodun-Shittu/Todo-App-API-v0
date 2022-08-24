@@ -49,6 +49,9 @@ export async function loginUser(req, res, next) {
 		const password = req.body.password;
 
 		const findUser = users.find((user) => user.email === email);
+		if (!findUser) {
+			throw new AppException(404, "Unable to retrieve user")
+		}
 		
 		if (await bcrypt.compare(password, findUser.password)) {
 			const token = JWT.sign({ id: findUser.id, email: findUser.email }, process.env.SECRET_KEY, { expiresIn: "24h" })
@@ -120,6 +123,7 @@ export function deleteUser(req, res) {
 	if (!deleteUser) {
 		throw new AppException(404, "Unable to retrieve user")
 	};
+	users = users.filter((user) => user.id !== id);
 	return res.status(204).json({
 		statusCode: 204,
 		message: "User successfully deleted"

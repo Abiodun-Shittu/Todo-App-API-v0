@@ -5,12 +5,12 @@ import SharedMiddlewares from '../shared/middlewares.js';
 
 const router = express.Router();
 
-router.get('/', getTodos);
+router.get('/',SharedMiddlewares.verifyToken, getTodos);
 
 router.post(
     '/',
     SharedMiddlewares.verifyToken,
-    SharedMiddlewares.generateRequiredBodyParamsValidatorMiddleware(['title', 'status', 'date']),
+    SharedMiddlewares.generateRequiredBodyParamsValidatorMiddleware(['title', 'status', 'dueDate']),
     createTodo,
 );
 

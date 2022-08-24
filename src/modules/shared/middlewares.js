@@ -12,9 +12,13 @@ function verifyToken(req, res, next) {
 	}
 	try {
 		JWT.verify(req.token, process.env.SECRET_KEY, (err, payload) => {
-			if (payload) { req.userId = payload.id }
-			next();
+			if (err) {
+				throw new AppException(400, "Bad Request")
+			} else {
+				req.userId = payload.id;
+			}
 		})
+		next();
 	} catch (err) {
 		throw new AppException(401, "Unauthorized")
 	}
