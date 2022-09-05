@@ -123,9 +123,10 @@ export function deleteUser(req, res) {
 	if (!deleteUser) {
 		throw new AppException(404, "Unable to retrieve user")
 	};
-	users = users.filter((user) => user.id !== id);
-	return res.status(204).json({
-		statusCode: 204,
+	const indexOfUser = users.findIndex((user) => user.id === id);
+	users.splice(indexOfUser);
+	return res.status(410).json({
+		statusCode: 410,
 		message: "User successfully deleted"
 	});
 };

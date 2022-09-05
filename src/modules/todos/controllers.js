@@ -1,10 +1,10 @@
-import { todos, users } from '../database/database.js';
+import { todos} from '../database/database.js';
 import AppException from '../../utils/exceptions/AppException.js';
 import { v4 } from 'uuid';
 
 
-export function getTodos(_, res) {
-	res.json(todos);
+export function getTodos(req, res) {
+	res.json(todos.filter((todo) => todo.userId === req.userId));
 };
 
 export function createTodo(req, res, next) {
@@ -61,6 +61,7 @@ export function getTodo(req, res) {
 	return res.status(200).json({
 		statusCode: 200,
 		data: {
+			id: findTodo.id,
 			userId: findTodo.userId,
 			title: findTodo.title,
 			status: findTodo.status,
@@ -120,9 +121,10 @@ export function deleteTodo(req, res) {
 	if (!deleteTodo) {
 		throw new AppException(404, "Unable to retrieve todo")
 	};
-	todos = todos.filter((todo) => todo.id !== id);
-	return res.status(204).json({
-		statusCode: 204,
+	const indexOfTodo = todos.findIndex((todo) => todo.id === id );
+	todos.splice(indexOfTodo);
+	return res.status(410).json({
+		statusCode: 410,
 		message: "Todo successfully deleted"
 	});
 };
