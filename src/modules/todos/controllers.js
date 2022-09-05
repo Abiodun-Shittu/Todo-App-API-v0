@@ -58,19 +58,23 @@ export function getTodo(req, res) {
 	if (!findTodo) {
 		throw new AppException(404, "Unable to retrieve todo")
 	}
-	return res.status(200).json({
-		statusCode: 200,
-		data: {
-			id: findTodo.id,
-			userId: findTodo.userId,
-			title: findTodo.title,
-			status: findTodo.status,
-			dueDate: findTodo.dueDate,
-			createdAt: findTodo.createdAt,
-			updatedAt: findTodo.updatedAt,
-		},
-	});
-
+	else if (findTodo.userId === req.userId) {
+		return res.status(200).json({
+			statusCode: 200,
+			data: {
+				id: findTodo.id,
+				userId: findTodo.userId,
+				title: findTodo.title,
+				status: findTodo.status,
+				dueDate: findTodo.dueDate,
+				createdAt: findTodo.createdAt,
+				updatedAt: findTodo.updatedAt,
+			},
+		});
+	}
+	else {
+		throw new AppException(403, "Unauthorized")
+	}
 };
 
 export function updateTodo(req, res) {
@@ -92,27 +96,32 @@ export function updateTodo(req, res) {
 	if (!updateTodo) {
 		throw new AppException(404, "Unable to retrieve todo")
 	}
-	if (title) {
-		updateTodo.title = title;
+	else if (updateTodo.userId === req.userId) {
+		if (title) {
+			updateTodo.title = title;
+		}
+		if (status) {
+			updateTodo.status = status;
+		}
+		if (dueDate) {
+			updateTodo.dueDate = dueDate;
+		}
+		updateTodo.updatedAt = strDate;
+		return res.status(200).json({
+			statusCode: 200,
+			data: {
+				userId: updateTodo.userId,
+				title: updateTodo.title,
+				status: updateTodo.status,
+				dueDate: updateTodo.dueDate,
+				createdAt: updateTodo.createdAt,
+				updatedAt: updateTodo.updatedAt,
+			},
+		});
 	}
-	if (status) {
-		updateTodo.status = status;
+	else {
+		throw new AppException(403, "Unauthorized")
 	}
-	if (dueDate) {
-		updateTodo.dueDate = dueDate;
-	}
-	updateTodo.updatedAt = strDate;
-	return res.status(200).json({
-		statusCode: 200,
-		data: {
-			userId: updateTodo.userId,
-			title: updateTodo.title,
-			status: updateTodo.status,
-			dueDate: updateTodo.dueDate,
-			createdAt: updateTodo.createdAt,
-			updatedAt: updateTodo.updatedAt,
-		},
-	});
 };
 
 export function deleteTodo(req, res) {
@@ -120,11 +129,16 @@ export function deleteTodo(req, res) {
 	const deleteTodo = todos.find((todo) => todo.id === id);
 	if (!deleteTodo) {
 		throw new AppException(404, "Unable to retrieve todo")
-	};
-	const indexOfTodo = todos.findIndex((todo) => todo.id === id );
-	todos.splice(indexOfTodo);
-	return res.status(410).json({
-		statusCode: 410,
-		message: "Todo successfully deleted"
-	});
+	}
+	else if (deleteTodo.userId === req.userId) {
+		const indexOfTodo = todos.findIndex((todo) => todo.id === id );
+		todos.splice(indexOfTodo, 1);
+		return res.status(410).json({
+			statusCode: 410,
+			message: "Todo successfully deleted"
+		});
+	}
+	else {
+		throw new AppException(403, "Unauthorized")
+	}
 };
