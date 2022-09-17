@@ -1,132 +1,121 @@
-import { v4 } from 'uuid';
-import bcrypt from 'bcrypt';
-import JWT from 'jsonwebtoken';
-import dotenv from 'dotenv';
+import { v4 } from "uuid";
+import bcrypt from "bcrypt";
+import JWT from "jsonwebtoken";
+import dotenv from "dotenv";
 
-import AppException from '../../utils/exceptions/AppException.js';
-import { users } from '../database/database.js'
+import AppException from "../../utils/exceptions/AppException.js";
+import pool from "../database/database.js";
 
 dotenv.config();
 
-
 export function getUsers(_, res) {
-	res.json(users);
-};
+	pool.query("SELECT * FROM users", (err, result) => {
+		if (!err) res.json(result.rows);
+	});
+}
 
 export async function createUser(req, res, next) {
 	try {
 		const hashPassword = await bcrypt.hash(req.body.password, 10);
-		const name = req.body.name;
-		const email = req.body.email;
+		const { name, email } = req.body;
 		const password = hashPassword;
+
 		const user = {
 			id: v4(),
 			name,
 			email,
 			password
-		};
+		}
 
-		users.push(user);
-
-		const token = JWT.sign({ id: user.id, email }, process.env.SECRET_KEY, { expiresIn: "24h" })
-		return res.status(201).json({
-			statusCode: 201,
-			data: {
-				id: user.id,
-				name: user.name,
-				email: user.email,
-			},
-			token,
-		});
-	} catch (err) {
+		pool.query(
+			"INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4) RETURNING *",
+			[user.id, user.name, user.email, user.password],
+			(err, result) => {
+				if (!err) {
+					const token = JWT.sign({ id: user.id, email },
+						process.env.SECRET_KEY, {
+						expiresIn: "24h",
+					}
+					);
+					return res.status(201).json({
+						statusCode: 201,
+						data: result.rows[0],
+						token,
+					});
+				}
+			});
+	}
+	catch (err) {
 		next(err);
 	}
-};
+}
 
 export async function loginUser(req, res, next) {
 	try {
-		const email = req.body.email;
-		const password = req.body.password;
+		const { email, password } = req.body;
 
-		const findUser = users.find((user) => user.email === email);
-		if (!findUser) {
-			throw new AppException(404, "Unable to retrieve user")
+		const findUser = await pool.query("SELECT * FROM users WHERE email = $1", [email])
+		if (!findUser.rowCount) {
+			throw new AppException(404, "Unable to retrieve user");
 		}
 		
-		if (await bcrypt.compare(password, findUser.password)) {
-			const token = JWT.sign({ id: findUser.id, email: findUser.email }, process.env.SECRET_KEY, { expiresIn: "24h" })
+		if (await bcrypt.compare(password, findUser)) {
+			const token = JWT.sign({ id: findUser.id, email: findUser.email },
+				process.env.SECRET_KEY, { expiresIn: "24h" }
+				);
 			return res.status(200).json({
 				statusCode: 200,
 				message: "success",
 				data: {
 					token,
-				}
+				},
 			});
-
 		} else {
 			throw new AppException(401, "Unable to authenticate user.");
 		}
-
 	} catch (err) {
 		next(err);
 	}
 }
 
-export function getUser(req, res) {
-	const id = req.params.id;
-	const findUser = users.find((user) => user.id === id);
-	if (!findUser) {
-		throw new AppException(404, "Unable to retrieve user")
+export async function getUser(req, res) {
+	const { id } = req.params;
+	const findUser = await pool.query("SELECT id, name, email FROM users WHERE id = $1", [id])
+	if (!findUser.rowCount) {
+		throw new AppException(404, "Unable to retrieve user");
 	}
+	console.log(findUser.rowCount);
 	return res.status(200).json({
 		statusCode: 200,
-		data: {
-			id: findUser.id,
-			name: findUser.name,
-			email: findUser.email,
-		},
-	});
-};
-
-export async function updateUser(req, res) {
-	const id = req.params.id;
-	const name = req.body.name;
-	const email = req.body.email;
-	const password = req.body.password;
-	const updateUser = users.find((user) => user.id === id);
-	if (!updateUser) {
-		throw new AppException(404, "Unable to retrieve user")
-	}
-	if (name) {
-		updateUser.name = name;
-	}
-	if (email) {
-		updateUser.email = email;
-	}
-	if (password) {
-		const hashPassword = await bcrypt.hash(password, 10);
-		updateUser.password = hashPassword;
-	}
-	return res.status(200).json({
-		statusCode: 200,
-		data: {
-			id: updateUser.id,
-			name: updateUser.name,
-			email: updateUser.email,
-		},
+		data: findUser.rows,
 	});
 }
 
-export function deleteUser(req, res) {
-	const id = req.params.id;
-	const deleteUser = users.find((user) => user.id === id);
+export async function updateUser(req, res) {
+	const { id } = req.params;
+	const name = req.body.name;
+	const email = req.body.email;
+	const hashPassword = await bcrypt.hash(req.body.password, 10);
+	const updateUser = await pool.query("UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4 RETURNING *",
+		[name, email, hashPassword, id]);
+	if (!updateUser) {
+		throw new AppException(404, "Unable to retrieve user");
+	}
+	return res.status(200).json({
+		statusCode: 200,
+		data: updateUser.rows[0],
+	});
+}
+
+export async function deleteUser(req, res) {
+	const { id } = req.params;
+	const deleteUser = await pool.query("DELETE FROM users WHERE id = $1", [id])
 	if (!deleteUser) {
-		throw new AppException(404, "Unable to retrieve user")
-	};
-	const indexOfUser = users.findIndex((user) => user.id === id);
-	users.splice(indexOfUser, 1);
+		throw new AppException(404, "Unable to retrieve user");
+	}
+
 	return res.status(410).json({
 		statusCode: 410,
-		message: "User successfully deleted"
+		message: "User successfully deleted",
 	});
-};
+}
