@@ -1,16 +1,17 @@
 import pg from "pg";
+import dotenv from "dotenv";
 
 const { Pool } = pg;
+dotenv.config();
 
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "users",
-  password: "12345678",
-  port: 5432,
+	user: process.env.PGUSER,
+	host: process.env.PGHOST,
+	database: process.env.PGDATABASE,
+	password: process.env.PGPASSWORD,
+	port: process.env.PGPORT,
 });
 
 export default pool;
 
 export let todos = [];
-
