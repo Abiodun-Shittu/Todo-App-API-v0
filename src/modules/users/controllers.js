@@ -58,10 +58,10 @@ export async function loginUser(req, res, next) {
 		if (!findUser.rowCount) {
 			throw new AppException(404, "Unable to retrieve user");
 		}
-
-		if (await bcrypt.compare(password, findUser)) {
+	
+		if (await bcrypt.compare(password, findUser.rows[0].password)) {
 			const token = JWT.sign(
-				{ id: findUser.id, email: findUser.email },
+				{ id: findUser.rows[0].id, email: findUser.rows[0].email },
 				process.env.SECRET_KEY,
 				{ expiresIn: "24h" }
 			);
