@@ -1,4 +1,4 @@
-import { todos} from '../database/database.js';
+import { todos} from '../../database/database.js';
 import AppException from '../../utils/exceptions/AppException.js';
 import { v4 } from 'uuid';
 

@@ -4,7 +4,7 @@ import JWT from "jsonwebtoken";
 import dotenv from "dotenv";
 
 import AppException from "../../utils/exceptions/AppException.js";
-import pool from "../database/database.js";
+import pool from "../../database/database.js";
 
 dotenv.config();
 
