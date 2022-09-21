@@ -34,9 +34,13 @@ export async function createUser(req, res, next) {
 			"INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4) RETURNING *",
 			[user.id, user.name, user.email, user.password]
 		);
-		const token = JWT.sign({ id: user.id, email }, process.env.SECRET_KEY, {
-			expiresIn: "24h",
-		});
+		const token = JWT.sign(
+			{ id: newUser.rows[0].id, email: newUser.rows[0].email },
+			process.env.SECRET_KEY,
+			{
+				expiresIn: "24h",
+			}
+		);
 		return res.status(201).json({
 			statusCode: 201,
 			data: newUser.rows[0],
@@ -58,7 +62,7 @@ export async function loginUser(req, res, next) {
 		if (!findUser.rowCount) {
 			throw new AppException(404, "Unable to retrieve user");
 		}
-	
+
 		if (await bcrypt.compare(password, findUser.rows[0].password)) {
 			const token = JWT.sign(
 				{ id: findUser.rows[0].id, email: findUser.rows[0].email },
