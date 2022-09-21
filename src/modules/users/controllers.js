@@ -8,10 +8,13 @@ import pool from "../database/database.js";
 
 dotenv.config();
 
-export function getUsers(_, res) {
-	pool.query("SELECT * FROM users", (err, result) => {
-		if (!err) res.json(result.rows);
-	});
+export async function getUsers(_, res, next) {
+	try {
+		const allUsers = await pool.query("SELECT * FROM users");
+		res.json(allUsers.rows);
+	} catch (err) {
+		next(err);
+	}
 }
 
 export async function createUser(req, res, next) {
@@ -24,28 +27,22 @@ export async function createUser(req, res, next) {
 			id: v4(),
 			name,
 			email,
-			password
-		}
+			password,
+		};
 
-		pool.query(
+		const newUser = await pool.query(
 			"INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4) RETURNING *",
-			[user.id, user.name, user.email, user.password],
-			(err, result) => {
-				if (!err) {
-					const token = JWT.sign({ id: user.id, email },
-						process.env.SECRET_KEY, {
-						expiresIn: "24h",
-					}
-					);
-					return res.status(201).json({
-						statusCode: 201,
-						data: result.rows[0],
-						token,
-					});
-				}
-			});
-	}
-	catch (err) {
+			[user.id, user.name, user.email, user.password]
+		);
+		const token = JWT.sign({ id: user.id, email }, process.env.SECRET_KEY, {
+			expiresIn: "24h",
+		});
+		return res.status(201).json({
+			statusCode: 201,
+			data: newUser.rows[0],
+			token,
+		});
+	} catch (err) {
 		next(err);
 	}
 }
@@ -54,15 +51,20 @@ export async function loginUser(req, res, next) {
 	try {
 		const { email, password } = req.body;
 
-		const findUser = await pool.query("SELECT * FROM users WHERE email = $1", [email])
+		const findUser = await pool.query(
+			"SELECT * FROM users WHERE email = $1",
+			[email]
+		);
 		if (!findUser.rowCount) {
 			throw new AppException(404, "Unable to retrieve user");
 		}
-		
+
 		if (await bcrypt.compare(password, findUser)) {
-			const token = JWT.sign({ id: findUser.id, email: findUser.email },
-				process.env.SECRET_KEY, { expiresIn: "24h" }
-				);
+			const token = JWT.sign(
+				{ id: findUser.id, email: findUser.email },
+				process.env.SECRET_KEY,
+				{ expiresIn: "24h" }
+			);
 			return res.status(200).json({
 				statusCode: 200,
 				message: "success",
@@ -80,7 +82,10 @@ export async function loginUser(req, res, next) {
 
 export async function getUser(req, res) {
 	const { id } = req.params;
-	const findUser = await pool.query("SELECT id, name, email FROM users WHERE id = $1", [id])
+	const findUser = await pool.query(
+		"SELECT id, name, email FROM users WHERE id = $1",
+		[id]
+	);
 	if (!findUser.rowCount) {
 		throw new AppException(404, "Unable to retrieve user");
 	}
@@ -96,8 +101,10 @@ export async function updateUser(req, res) {
 	const name = req.body.name;
 	const email = req.body.email;
 	const hashPassword = await bcrypt.hash(req.body.password, 10);
-	const updateUser = await pool.query("UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4 RETURNING *",
-		[name, email, hashPassword, id]);
+	const updateUser = await pool.query(
+		"UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4 RETURNING *",
+		[name, email, hashPassword, id]
+	);
 	if (!updateUser) {
 		throw new AppException(404, "Unable to retrieve user");
 	}
@@ -109,7 +116,9 @@ export async function updateUser(req, res) {
 
 export async function deleteUser(req, res) {
 	const { id } = req.params;
-	const deleteUser = await pool.query("DELETE FROM users WHERE id = $1", [id])
+	const deleteUser = await pool.query("DELETE FROM users WHERE id = $1", [
+		id,
+	]);
 	if (!deleteUser) {
 		throw new AppException(404, "Unable to retrieve user");
 	}
