@@ -10,7 +10,9 @@ dotenv.config();
 
 export async function getUsers(_, res, next) {
 	try {
-		const allUsers = await pool.query("SELECT * FROM users");
+		const allUsers = await pool.query(
+			"SELECT unique_id, name, email FROM users"
+		);
 		res.json(allUsers.rows);
 	} catch (err) {
 		next(err);
@@ -29,13 +31,20 @@ export async function createUser(req, res, next) {
 			email,
 			password,
 		};
+		const checkEmail = await pool.query(
+			"SELECT email FROM  users WHERE email = $1",
+			[email]
+		);
+		if (checkEmail.rowCount) {
+			throw new AppException(403, "Email Already Exists");
+		}
 
 		const newUser = await pool.query(
-			"INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4) RETURNING *",
+			"INSERT INTO users (unique_id, name, email, password) VALUES ($1, $2, $3, $4) RETURNING unique_id, name, email",
 			[user.id, user.name, user.email, user.password]
 		);
 		const token = JWT.sign(
-			{ id: newUser.rows[0].id, email: newUser.rows[0].email },
+			{ id: newUser.rows[0].unique_id, email: newUser.rows[0].email },
 			process.env.SECRET_KEY,
 			{
 				expiresIn: "24h",
@@ -56,7 +65,7 @@ export async function loginUser(req, res, next) {
 		const { email, password } = req.body;
 
 		const findUser = await pool.query(
-			"SELECT * FROM users WHERE email = $1",
+			"SELECT unique_id, email, password FROM users WHERE email = $1",
 			[email]
 		);
 		if (!findUser.rowCount) {
@@ -65,7 +74,10 @@ export async function loginUser(req, res, next) {
 
 		if (await bcrypt.compare(password, findUser.rows[0].password)) {
 			const token = JWT.sign(
-				{ id: findUser.rows[0].id, email: findUser.rows[0].email },
+				{
+					id: findUser.rows[0].unique_id,
+					email: findUser.rows[0].email,
+				},
 				process.env.SECRET_KEY,
 				{ expiresIn: "24h" }
 			);
@@ -84,51 +96,83 @@ export async function loginUser(req, res, next) {
 	}
 }
 
-export async function getUser(req, res) {
-	const { id } = req.params;
-	const findUser = await pool.query(
-		"SELECT id, name, email FROM users WHERE id = $1",
-		[id]
-	);
-	if (!findUser.rowCount) {
-		throw new AppException(404, "Unable to retrieve user");
+export async function getUser(req, res, next) {
+	try {
+		const { id } = req.params;
+		const findUser = await pool.query(
+			"SELECT unique_id, name, email FROM users WHERE unique_id = $1",
+			[id]
+		);
+		if (!findUser.rowCount) {
+			throw new AppException(404, "Unable to retrieve user");
+		}
+		return res.status(200).json({
+			statusCode: 200,
+			data: findUser.rows[0],
+		});
+	} catch (err) {
+		next(err);
 	}
-	console.log(findUser.rowCount);
-	return res.status(200).json({
-		statusCode: 200,
-		data: findUser.rows,
-	});
 }
 
-export async function updateUser(req, res) {
-	const { id } = req.params;
-	const name = req.body.name;
-	const email = req.body.email;
-	const hashPassword = await bcrypt.hash(req.body.password, 10);
-	const updateUser = await pool.query(
-		"UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4 RETURNING *",
-		[name, email, hashPassword, id]
-	);
-	if (!updateUser) {
-		throw new AppException(404, "Unable to retrieve user");
+export async function updateUser(req, res, next) {
+	try {
+		const { id } = req.params;
+		const { name, email, password } = req.body;
+		const findUser = await pool.query(
+			"SELECT name, email, password FROM users WHERE unique_id = $1",
+			[id]
+		);
+		if (!findUser.rowCount) {
+			throw new AppException(404, "Unable to retrieve user");
+		}
+		if (name) {
+			const updateName = await pool.query(
+				"UPDATE users SET name = $1 WHERE unique_id = $2 RETURNING name",
+				[name, id]
+			);
+			findUser.rows[0].name = updateName.rows[0].name;
+		}
+		if (email) {
+			const updateEmail = await pool.query(
+				"UPDATE users SET email = $1 WHERE unique_id = $2 RETURNING email",
+				[email, id]
+			);
+			findUser.rows[0].email = updateEmail.rows[0].email;
+		}
+		if (password) {
+			const hashPassword = await bcrypt.hash(password, 10);
+			const updatePassword = await pool.query(
+				"UPDATE users SET password = $1 WHERE unique_id = $2 RETURNING password",
+				[hashPassword, id]
+			);
+			findUser.rows[0].password = updatePassword.rows[0].password;
+		}
+		return res.status(200).json({
+			statusCode: 200,
+			data: findUser.rows[0],
+		});
+	} catch (err) {
+		next(err);
 	}
-	return res.status(200).json({
-		statusCode: 200,
-		data: updateUser.rows[0],
-	});
 }
 
-export async function deleteUser(req, res) {
-	const { id } = req.params;
-	const deleteUser = await pool.query("DELETE FROM users WHERE id = $1", [
-		id,
-	]);
-	if (!deleteUser) {
-		throw new AppException(404, "Unable to retrieve user");
+export async function deleteUser(req, res, next) {
+	try {
+		const { id } = req.params;
+		const findUser = await pool.query(
+			"SELECT name FROM users WHERE unique_id = $1",
+			[id]
+		);
+		if (!findUser.rowCount) {
+			throw new AppException(404, "Unable to retrieve user");
+		}
+		pool.query("DELETE FROM users WHERE unique_id = $1", [id]);
+		return res.status(410).json({
+			statusCode: 410,
+			message: "User successfully deleted",
+		});
+	} catch (err) {
+		next(err);
 	}
-
-	return res.status(410).json({
-		statusCode: 410,
-		message: "User successfully deleted",
-	});
 }
