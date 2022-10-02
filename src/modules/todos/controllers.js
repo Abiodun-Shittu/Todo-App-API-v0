@@ -1,144 +1,165 @@
-import { todos} from '../../database/database.js';
-import AppException from '../../utils/exceptions/AppException.js';
-import { v4 } from 'uuid';
+import { v4 } from "uuid";
 
+import pool from "../../database/database.js";
+import AppException from "../../utils/exceptions/AppException.js";
 
-export function getTodos(req, res) {
-	res.json(todos.filter((todo) => todo.userId === req.userId));
-};
+export async function getTodos(req, res, next) {
+	try {
+		const allTodos = await pool.query(
+			"SELECT todo_id, user_id, title, status, due_date, created_at, updated_at FROM todos WHERE user_id = $1",
+			[req.userId]
+		);
+		res.json(allTodos.rows);
+	} catch (err) {
+		next(err);
+	}
+}
 
-export function createTodo(req, res, next) {
+export async function createTodo(req, res, next) {
 	try {
 		let today = new Date();
-		
-		let strDate = 'Y-m-d h:M:s'
-			.replace('Y', today.getFullYear())
-			.replace('m', today.getMonth()+1)
-			.replace('d', today.getDate())
-			.replace('h', today.getHours())
-			.replace('M', today.getMinutes())
-			.replace('s', today.getSeconds());
-		const id = v4();
-		const userId = req.userId;
-		const title = req.body.title;
-		const status = req.body.status;
-		const dueDate = req.body.dueDate;
+
+		let strDate = "Y-m-d h:M:s"
+			.replace("Y", today.getFullYear())
+			.replace("m", today.getMonth() + 1)
+			.replace("d", today.getDate())
+			.replace("h", today.getHours())
+			.replace("M", today.getMinutes())
+			.replace("s", today.getSeconds());
+		const todo_id = v4();
+		const user_id = req.userId;
+		const { title, status, dueDate } = req.body;
 		const createdAt = strDate;
 		const updatedAt = strDate;
 		const todo = {
-			id,
-			userId,
+			todo_id,
+			user_id,
 			title,
 			status,
 			dueDate,
 			createdAt,
 			updatedAt,
-		}
-		todos.push(todo);
+		};
+		const newTodo = await pool.query(
+			"INSERT INTO todos (todo_id, user_id, title, status, due_date, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING todo_id, user_id, title, status, due_date, created_at, updated_at",
+			[
+				todo.todo_id,
+				todo.user_id,
+				todo.title,
+				todo.status,
+				todo.dueDate,
+				todo.createdAt,
+				todo.updatedAt,
+			]
+		);
 		return res.status(201).json({
-			statcode: 201,
-			data: {
-				id: todo.id,
-				userId: todo.userId,
-				title: todo.title,
-				status: todo.status,
-				dueDate: todo.dueDate,
-				createdAt: todo.createdAt,
-				updatedAt: todo.updatedAt,
-			}
-		})
+			statuscode: 201,
+			data: newTodo.rows[0],
+		});
 	} catch (err) {
 		next(err);
-	};
-};
+	}
+}
 
-export function getTodo(req, res) {
-	const id = req.params.id;
-	const findTodo = todos.find((todo) => todo.id === id);
-	if (!findTodo) {
-		throw new AppException(404, "Unable to retrieve todo")
-	}
-	else if (findTodo.userId === req.userId) {
-		return res.status(200).json({
-			statusCode: 200,
-			data: {
-				id: findTodo.id,
-				userId: findTodo.userId,
-				title: findTodo.title,
-				status: findTodo.status,
-				dueDate: findTodo.dueDate,
-				createdAt: findTodo.createdAt,
-				updatedAt: findTodo.updatedAt,
-			},
-		});
-	}
-	else {
-		throw new AppException(403, "Unauthorized")
-	}
-};
-
-export function updateTodo(req, res) {
-	let today = new Date();
-		
-	let strDate = 'Y-m-d h:M:s'
-		.replace('Y', today.getFullYear())
-		.replace('m', today.getMonth()+1)
-		.replace('d', today.getDate())
-		.replace('h', today.getHours())
-		.replace('M', today.getMinutes())
-		.replace('s', today.getSeconds());
-
-	const id = req.params.id;
-	const title = req.body.title;
-	const status = req.body.status
-	const dueDate = req.body.dueDate;
-	const updateTodo = todos.find((todo) => todo.id === id);
-	if (!updateTodo) {
-		throw new AppException(404, "Unable to retrieve todo")
-	}
-	else if (updateTodo.userId === req.userId) {
-		if (title) {
-			updateTodo.title = title;
+export async function getTodo(req, res, next) {
+	try {
+		const { id } = req.params;
+		const findTodo = await pool.query(
+			"SELECT todo_id, user_id, title, status, due_date, created_at, updated_at FROM todos WHERE todo_id = $1",
+			[id]
+		);
+		if (!findTodo.rowCount) {
+			throw new AppException(404, "Unable to retrieve todo");
+		} else if (findTodo.rows[0].user_id === req.userId) {
+			return res.status(200).json({
+				statusCode: 200,
+				data: findTodo.rows[0],
+			});
+		} else {
+			throw new AppException(403, "Unauthorized");
 		}
-		if (status) {
-			updateTodo.status = status;
-		}
-		if (dueDate) {
-			updateTodo.dueDate = dueDate;
-		}
-		updateTodo.updatedAt = strDate;
-		return res.status(200).json({
-			statusCode: 200,
-			data: {
-				userId: updateTodo.userId,
-				title: updateTodo.title,
-				status: updateTodo.status,
-				dueDate: updateTodo.dueDate,
-				createdAt: updateTodo.createdAt,
-				updatedAt: updateTodo.updatedAt,
-			},
-		});
+	} catch (err) {
+		next(err);
 	}
-	else {
-		throw new AppException(403, "Unauthorized")
-	}
-};
+}
 
-export function deleteTodo(req, res) {
-	const id = req.params.id;
-	const deleteTodo = todos.find((todo) => todo.id === id);
-	if (!deleteTodo) {
-		throw new AppException(404, "Unable to retrieve todo")
+export async function updateTodo(req, res, next) {
+	try {
+		let today = new Date();
+
+		let strDate = "Y-m-d h:M:s"
+			.replace("Y", today.getFullYear())
+			.replace("m", today.getMonth() + 1)
+			.replace("d", today.getDate())
+			.replace("h", today.getHours())
+			.replace("M", today.getMinutes())
+			.replace("s", today.getSeconds());
+
+		const { id } = req.params;
+		const { title, status, dueDate } = req.body;
+		const updatedAt = strDate;
+		const findTodo = await pool.query(
+			"SELECT todo_id, user_id, title, status, due_date, created_at, updated_at FROM todos WHERE todo_id = $1",
+			[id]
+		);
+		if (!findTodo.rowCount) {
+			throw new AppException(404, "Unable to retrieve todo");
+		} else if (findTodo.rows[0].user_id === req.userId) {
+			if (title) {
+				const updateTitle = await pool.query(
+					"UPDATE todos SET title = $1, updated_at = $2 WHERE todo_id = $3 RETURNING title, updated_at",
+					[title, updatedAt, id]
+				);
+				findTodo.rows[0].title = updateTitle.rows[0].title;
+				findTodo.rows[0].updated_at = updateTitle.rows[0].updated_at;
+			}
+			if (status) {
+				const updateStatus = await pool.query(
+					"UPDATE todos SET status = $1, updated_at = $2 WHERE todo_id = $3 RETURNING status, updated_at",
+					[status, updatedAt, id]
+				);
+				findTodo.rows[0].status = updateStatus.rows[0].status;
+				findTodo.rows[0].updated_at = updateStatus.rows[0].updated_at;
+			}
+			if (dueDate) {
+				const updateDate = await pool.query(
+					"UPDATE todos SET due_date = $1, updated_at = $2 WHERE todo_id = $3 RETURNING due_date, updated_at",
+					[dueDate, updatedAt, id]
+				);
+				findTodo.rows[0].due_date = updateDate.rows[0].due_date;
+				findTodo.rows[0].updated_at = updateDate.rows[0].updated_at;
+			}
+			return res.status(200).json({
+				statusCode: 200,
+				data: findTodo.rows[0],
+			});
+		} else {
+			throw new AppException(403, "Unauthorized");
+		}
+	} catch (err) {
+		next(err);
 	}
-	else if (deleteTodo.userId === req.userId) {
-		const indexOfTodo = todos.findIndex((todo) => todo.id === id );
-		todos.splice(indexOfTodo, 1);
-		return res.status(410).json({
-			statusCode: 410,
-			message: "Todo successfully deleted"
-		});
+}
+
+export async function deleteTodo(req, res, next) {
+	try {
+		const { id } = req.params;
+		const findTodo = await pool.query(
+			"SELECT user_id, title FROM todos WHERE todo_id = $1",
+			[id]
+			);
+		if (!findTodo.rowCount) {
+			throw new AppException(404, "Unable to retrieve todo");
+		} else if (findTodo.rows[0].user_id === req.userId) {
+			pool.query("DELETE FROM todos WHERE todo_id = $1", [id]);
+			return res.status(410).json({
+				statusCode: 410,
+				message: "Todo successfully deleted",
+			});
+		} else {
+			throw new AppException(403, "Unauthorized");
+		}
+	} catch (err) {
+		next(err);
 	}
-	else {
-		throw new AppException(403, "Unauthorized")
-	}
-};
+}
