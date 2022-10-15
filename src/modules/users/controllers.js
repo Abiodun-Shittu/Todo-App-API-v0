@@ -41,6 +41,7 @@ export async function createUser(req, res, next) {
 			user.email,
 			user.password,
 		]);
+		console.log(newUser)
 		const token = JWT.sign(
 			{ id: newUser.rows[0].unique_id, email: newUser.rows[0].email },
 			process.env.SECRET_KEY,
@@ -50,7 +51,7 @@ export async function createUser(req, res, next) {
 		);
 		return res.status(201).json({
 			statusCode: 201,
-			data: newUser.rows[0],
+			message: "User Successfully Created",
 			token,
 		});
 	} catch (err) {
@@ -136,7 +137,7 @@ export async function updateUser(req, res, next) {
 		}
 		return res.status(200).json({
 			statusCode: 200,
-			data: updateUser.rows[0],
+			message: "User Successfully Updated",
 		});
 	} catch (err) {
 		next(err);

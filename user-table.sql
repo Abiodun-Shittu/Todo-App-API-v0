@@ -25,9 +25,9 @@ CREATE TABLE todos
 	user_id VARCHAR(36),
 	title VARCHAR(200),
 	status VARCHAR(50),
-	due_date VARCHAR(20),
-	created_at VARCHAR(20),
-	updated_at VARCHAR(20),
+	due_date TIMESTAMP,
+	created_at TIMESTAMP,
+	updated_at TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(unique_id)
 );
 

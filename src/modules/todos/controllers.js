@@ -15,20 +15,11 @@ export async function getTodos(req, res, next) {
 
 export async function createTodo(req, res, next) {
 	try {
-		let today = new Date();
-
-		let strDate = "Y-m-d h:M:s"
-			.replace("Y", today.getFullYear())
-			.replace("m", today.getMonth() + 1)
-			.replace("d", today.getDate())
-			.replace("h", today.getHours())
-			.replace("M", today.getMinutes())
-			.replace("s", today.getSeconds());
 		const todo_id = v4();
 		const user_id = req.userId;
 		const { title, status, dueDate } = req.body;
-		const createdAt = strDate;
-		const updatedAt = strDate;
+		const createdAt = new Date();
+		const updatedAt = new Date();
 		const todo = {
 			todo_id,
 			user_id,
@@ -38,7 +29,7 @@ export async function createTodo(req, res, next) {
 			createdAt,
 			updatedAt,
 		};
-		const newTodo = await pool.query(queries.newTodo, [
+		await pool.query(queries.newTodo, [
 			todo.todo_id,
 			todo.user_id,
 			todo.title,
@@ -49,7 +40,7 @@ export async function createTodo(req, res, next) {
 		]);
 		return res.status(201).json({
 			statuscode: 201,
-			data: newTodo.rows[0],
+			message: "Todo Successfully Created",
 		});
 	} catch (err) {
 		next(err);
@@ -77,19 +68,9 @@ export async function getTodo(req, res, next) {
 
 export async function updateTodo(req, res, next) {
 	try {
-		let today = new Date();
-
-		let strDate = "Y-m-d h:M:s"
-			.replace("Y", today.getFullYear())
-			.replace("m", today.getMonth() + 1)
-			.replace("d", today.getDate())
-			.replace("h", today.getHours())
-			.replace("M", today.getMinutes())
-			.replace("s", today.getSeconds());
-
 		const { id } = req.params;
 		const { title, status, dueDate } = req.body;
-		const updatedAt = strDate;
+		const updatedAt = new Date();
 		const findTodo = await pool.query(queries.findTodo, [id]);
 		if (!findTodo.rowCount) {
 			throw new AppException(404, "Unable to retrieve todo");
@@ -123,7 +104,7 @@ export async function updateTodo(req, res, next) {
 			}
 			return res.status(200).json({
 				statusCode: 200,
-				data: findTodo.rows[0],
+				message: "Todo Successfully Updated",
 			});
 		} else {
 			throw new AppException(403, "Unauthorized");
