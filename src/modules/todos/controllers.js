@@ -86,20 +86,21 @@ export async function updateTodo(req, res, next) {
 			let updateQuery = "UPDATE todos SET updated_at = $1, ";
 			const valuesInOrder = [updatedAt];
 			
+			let count = 2;
 			updateKeys.forEach((key, index) => {
 				const value = req.body[key];
 				valuesInOrder.push(value);
 				
-				let count = 2;
 				updateQuery += `${key} = $` + count;
+				count++;
 				if (index < updateKeys.length - 1) {
-					count++;
 					updateQuery += ", ";
 				}
 			});
 			valuesInOrder.push(id);
 			let lastParam = updateKeys.length + 2;
 			updateQuery += " WHERE todo_id = $" + lastParam;
+			console.log(updateQuery, valuesInOrder)
 			pool.query(updateQuery, valuesInOrder);
 			return res.status(200).json({
 				statusCode: 200,
