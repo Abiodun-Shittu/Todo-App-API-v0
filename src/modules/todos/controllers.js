@@ -56,12 +56,20 @@ export async function getTodo(req, res, next) {
 		} else if (findTodo.rows[0].user_id === req.userId) {
 			return res.status(200).json({
 				statusCode: 200,
-				data: findTodo.rows[0],
+				data: {
+					todo_id: findTodo.rows[0].todo_id,
+					title: findTodo.rows[0].title,
+					status: findTodo.rows[0].status,
+					dueDate: findTodo.rows[0].due_date,
+					createdAt: findTodo.rows[0].created_at,
+					updatedAt: findTodo.rows[0].updated_at
+				},
 			});
 		} else {
 			throw new AppException(403, "Unauthorized");
 		}
 	} catch (err) {
+		console.log(err);
 		next(err);
 	}
 }
@@ -69,39 +77,30 @@ export async function getTodo(req, res, next) {
 export async function updateTodo(req, res, next) {
 	try {
 		const { id } = req.params;
-		const { title, status, dueDate } = req.body;
 		const updatedAt = new Date();
 		const findTodo = await pool.query(queries.findTodo, [id]);
 		if (!findTodo.rowCount) {
 			throw new AppException(404, "Unable to retrieve todo");
 		} else if (findTodo.rows[0].user_id === req.userId) {
-			if (title) {
-				const updateTitle = await pool.query(queries.updateTitle, [
-					title,
-					updatedAt,
-					id,
-				]);
-				findTodo.rows[0].title = updateTitle.rows[0].title;
-				findTodo.rows[0].updated_at = updateTitle.rows[0].updated_at;
-			}
-			if (status) {
-				const updateStatus = await pool.query(queries.updateStatus, [
-					status,
-					updatedAt,
-					id,
-				]);
-				findTodo.rows[0].status = updateStatus.rows[0].status;
-				findTodo.rows[0].updated_at = updateStatus.rows[0].updated_at;
-			}
-			if (dueDate) {
-				const updateDate = await pool.query(queries.updateDate, [
-					dueDate,
-					updatedAt,
-					id,
-				]);
-				findTodo.rows[0].due_date = updateDate.rows[0].due_date;
-				findTodo.rows[0].updated_at = updateDate.rows[0].updated_at;
-			}
+			const updateKeys = Object.keys(req.body);
+			let updateQuery = "UPDATE todos SET updated_at = $1, ";
+			const valuesInOrder = [updatedAt];
+			
+			updateKeys.forEach((key, index) => {
+				const value = req.body[key];
+				valuesInOrder.push(value);
+				
+				let count = 2;
+				updateQuery += `${key} = $` + count;
+				if (index < updateKeys.length - 1) {
+					count++;
+					updateQuery += ", ";
+				}
+			});
+			valuesInOrder.push(id);
+			let lastParam = updateKeys.length + 2;
+			updateQuery += " WHERE todo_id = $" + lastParam;
+			pool.query(updateQuery, valuesInOrder);
 			return res.status(200).json({
 				statusCode: 200,
 				message: "Todo Successfully Updated",
