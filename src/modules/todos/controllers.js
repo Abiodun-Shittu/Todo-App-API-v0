@@ -62,7 +62,7 @@ export async function getTodo(req, res, next) {
 					status: findTodo.rows[0].status,
 					dueDate: findTodo.rows[0].due_date,
 					createdAt: findTodo.rows[0].created_at,
-					updatedAt: findTodo.rows[0].updated_at
+					updatedAt: findTodo.rows[0].updated_at,
 				},
 			});
 		} else {
@@ -85,12 +85,12 @@ export async function updateTodo(req, res, next) {
 			const updateKeys = Object.keys(req.body);
 			let updateQuery = "UPDATE todos SET updated_at = $1, ";
 			const valuesInOrder = [updatedAt];
-			
+
 			let count = 2;
 			updateKeys.forEach((key, index) => {
 				const value = req.body[key];
 				valuesInOrder.push(value);
-				
+
 				updateQuery += `${key} = $` + count;
 				count++;
 				if (index < updateKeys.length - 1) {
@@ -100,7 +100,6 @@ export async function updateTodo(req, res, next) {
 			valuesInOrder.push(id);
 			let lastParam = updateKeys.length + 2;
 			updateQuery += " WHERE todo_id = $" + lastParam;
-			console.log(updateQuery, valuesInOrder)
 			pool.query(updateQuery, valuesInOrder);
 			return res.status(200).json({
 				statusCode: 200,
