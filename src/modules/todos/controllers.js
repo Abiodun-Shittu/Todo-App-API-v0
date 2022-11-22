@@ -17,14 +17,14 @@ export async function createTodo(req, res, next) {
 	try {
 		const todo_id = v4();
 		const user_id = req.userId;
-		const { title, status, dueDate } = req.body;
+		const { title, description, dueDate } = req.body;
 		const createdAt = new Date();
 		const updatedAt = new Date();
 		const todo = {
 			todo_id,
 			user_id,
 			title,
-			status,
+			description,
 			dueDate,
 			createdAt,
 			updatedAt,
@@ -33,7 +33,7 @@ export async function createTodo(req, res, next) {
 			todo.todo_id,
 			todo.user_id,
 			todo.title,
-			todo.status,
+			todo.description,
 			todo.dueDate,
 			todo.createdAt,
 			todo.updatedAt,
@@ -59,7 +59,7 @@ export async function getTodo(req, res, next) {
 				data: {
 					todo_id: findTodo.rows[0].todo_id,
 					title: findTodo.rows[0].title,
-					status: findTodo.rows[0].status,
+					description: findTodo.rows[0].description,
 					dueDate: findTodo.rows[0].due_date,
 					createdAt: findTodo.rows[0].created_at,
 					updatedAt: findTodo.rows[0].updated_at,

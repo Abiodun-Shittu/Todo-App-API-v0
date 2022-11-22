@@ -1,7 +1,7 @@
 const allUsers = "SELECT unique_id, name, email FROM users";
 const checkMail = "SELECT email FROM  users WHERE email = $1";
 const newUser =
-	"INSERT INTO users (unique_id, name, email, password) VALUES ($1, $2, $3, $4)";
+	"INSERT INTO users (unique_id, name, email, password) VALUES ($1, $2, $3, $4) RETURNING unique_id, name, email";
 const findUser =
 	"SELECT unique_id, email, password FROM users WHERE email = $1";
 const getUser =
