@@ -41,7 +41,6 @@ export async function createUser(req, res, next) {
 			user.email,
 			user.password,
 		]);
-		console.log(newUser.rows)
 		const token = JWT.sign(
 			{ id: newUser.rows[0].unique_id, email: newUser.rows[0].email },
 			process.env.SECRET_KEY,
@@ -55,7 +54,6 @@ export async function createUser(req, res, next) {
 			token,
 		});
 	} catch (err) {
-		console.log(err)
 		next(err);
 	}
 }
