@@ -51,6 +51,7 @@ export async function createUser(req, res, next) {
 		return res.status(201).json({
 			statusCode: 201,
 			message: "User Successfully Created",
+			id: newUser.rows[0].unique_id,
 			token,
 		});
 	} catch (err) {
@@ -80,6 +81,7 @@ export async function loginUser(req, res, next) {
 				statusCode: 200,
 				message: "success",
 				data: {
+					id: findUser.rows[0].unique_id,
 					token,
 				},
 			});
