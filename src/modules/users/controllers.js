@@ -153,8 +153,8 @@ export async function deleteUser(req, res, next) {
 			throw new AppException(404, "Unable to retrieve user");
 		}
 		pool.query(queries.deleteUser, [id]);
-		return res.status(410).json({
-			statusCode: 410,
+		return res.status(200).json({
+			statusCode: 200,
 			message: "User successfully deleted",
 		});
 	} catch (err) {

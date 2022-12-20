@@ -10,7 +10,7 @@ router.get('/',SharedMiddlewares.verifyToken, getTodos);
 router.post(
     '/',
     SharedMiddlewares.verifyToken,
-    SharedMiddlewares.generateRequiredBodyParamsValidatorMiddleware(['title', 'status', 'dueDate']),
+    SharedMiddlewares.generateRequiredBodyParamsValidatorMiddleware(['title', 'description', 'dueDate']),
     createTodo,
 );
 
